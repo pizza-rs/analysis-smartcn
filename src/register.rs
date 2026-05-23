@@ -1,0 +1,29 @@
+//! Register SmartCN analysis components into [`AnalysisFactory`].
+
+use alloc::boxed::Box;
+use alloc::vec;
+
+use pizza_engine::analysis::AnalysisFactory;
+use pizza_engine::analysis::Analyzer;
+
+use crate::{SmartCnStopFilter, SmartCnTokenizer};
+
+/// Register SmartCN tokenizer, filter, and analyzer.
+///
+/// Matches Elasticsearch's analysis-smartcn plugin registration:
+/// - Tokenizer: `smartcn_tokenizer`
+/// - Token Filter: `smartcn_stop`
+/// - Analyzer: `smartcn` (SmartChineseAnalyzer pipeline: tokenizer → stop)
+pub fn register_all(factory: &mut AnalysisFactory) {
+    factory.register_tokenizer("smartcn_tokenizer", Box::new(SmartCnTokenizer::new()));
+    factory.register_token_filter("smartcn_stop", Box::new(SmartCnStopFilter::new()));
+
+    factory.register_analyzer(
+        "smartcn",
+        Analyzer::new(
+            vec![],
+            Box::new(SmartCnTokenizer::new()),
+            vec![Box::new(SmartCnStopFilter::new())],
+        ),
+    );
+}

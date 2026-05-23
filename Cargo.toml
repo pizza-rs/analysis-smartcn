@@ -1,0 +1,21 @@
+[package]
+name = "pizza-analysis-smartcn"
+version = "0.1.0"
+authors = ["INFINI Labs <hello@infini.ltd>"]
+edition = "2021"
+license = "MIT"
+description = "SmartCN Chinese word segmentation for INFINI Pizza — HMM-based tokenizer"
+repository = "https://pizza.rs"
+keywords = ["pizza", "chinese", "smartcn", "tokenizer", "hmm"]
+
+
+[features]
+default = []
+std = ["pizza-engine/std"]
+
+[dependencies]
+pizza-engine = { path = "../../lib/engine", default-features = false }
+hashbrown = { version = "0.14", default-features = false }
+cedarwood = { git = "https://github.com/infinilabs/cedarwood", branch = "main", default-features = false }
+
+[dev-dependencies]
