@@ -16,6 +16,6 @@ std = ["pizza-engine/std"]
 [dependencies]
 pizza-engine = { path = "../../lib/engine", default-features = false }
 hashbrown = { version = "0.14", default-features = false }
-cedarwood = { git = "https://github.com/infinilabs/cedarwood", branch = "main", default-features = false }
+cedarwood = { git = "https://github.com/pizza-rs/cedarwood", branch = "main", default-features = false }
 
 [dev-dependencies]
