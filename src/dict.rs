@@ -36,6 +36,16 @@ impl WordDict {
     ///
     /// Constructs a DARTS trie from ~85,000 entries for O(1) prefix scanning.
     pub fn new() -> Self {
+        // External config first (`<config>/analysis/smartcn/word_freq.txt`),
+        // falling back to the copy embedded in the binary.
+        #[cfg(feature = "std")]
+        let data = pizza_engine::analysis::dict::load_str(
+            "smartcn",
+            "word_freq.txt",
+            Some(include_str!("data/word_freq.txt")),
+        )
+        .expect("smartcn word_freq dictionary");
+        #[cfg(not(feature = "std"))]
         let data = include_str!("data/word_freq.txt");
 
         // First pass: parse entries
