@@ -20,10 +20,10 @@
 //! - [`SmartCnStopFilter`] — Chinese stop words filter
 extern crate alloc;
 mod dict;
-mod tokenizer;
 mod stop;
+mod tokenizer;
 
-pub use tokenizer::SmartCnTokenizer;
 pub use stop::SmartCnStopFilter;
+pub use tokenizer::SmartCnTokenizer;
 pub mod register;
 pub use register::register_all;

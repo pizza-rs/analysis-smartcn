@@ -17,7 +17,8 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use pizza_engine::analysis::{Token, Tokenizer};
+use pizza_engine::analysis::Token;
+use pizza_engine::analysis::Tokenizer;
 
 use crate::dict::WordDict;
 
@@ -85,7 +86,11 @@ impl Tokenizer for SmartCnTokenizer {
                     while i < chars.len() && classify_char(chars[i].1) == CharType::AsciiLetter {
                         i += 1;
                     }
-                    let end_byte = if i < chars.len() { chars[i].0 } else { text.len() };
+                    let end_byte = if i < chars.len() {
+                        chars[i].0
+                    } else {
+                        text.len()
+                    };
                     tokens.push(Token {
                         term: Cow::Borrowed(&text[start_byte..end_byte]),
                         start_offset: start_char as u32,
@@ -101,7 +106,11 @@ impl Tokenizer for SmartCnTokenizer {
                     while i < chars.len() && classify_char(chars[i].1) == CharType::Digit {
                         i += 1;
                     }
-                    let end_byte = if i < chars.len() { chars[i].0 } else { text.len() };
+                    let end_byte = if i < chars.len() {
+                        chars[i].0
+                    } else {
+                        text.len()
+                    };
                     tokens.push(Token {
                         term: Cow::Borrowed(&text[start_byte..end_byte]),
                         start_offset: start_char as u32,
@@ -346,4 +355,3 @@ mod tests {
         assert!(has_python);
     }
 }
-

@@ -1,7 +1,11 @@
 //! Comprehensive tests for pizza-analysis-smartcn (Chinese word segmentation).
 
-use pizza_analysis_smartcn::{SmartCnStopFilter, SmartCnTokenizer};
-use pizza_engine::analysis::{AnalysisFactory, Token, TokenFilter, Tokenizer};
+use pizza_analysis_smartcn::SmartCnStopFilter;
+use pizza_analysis_smartcn::SmartCnTokenizer;
+use pizza_engine::analysis::AnalysisFactory;
+use pizza_engine::analysis::Token;
+use pizza_engine::analysis::TokenFilter;
+use pizza_engine::analysis::Tokenizer;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helpers
