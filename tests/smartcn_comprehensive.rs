@@ -272,3 +272,89 @@ fn tokenize_japanese_kanji() {
     let tokens = t.tokenize("東京大学");
     assert!(!tokens.is_empty());
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Dictionary segmentation quality (regression: the trie length bug collapsed
+// every sentence to single characters)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn segments_known_dictionary_word() {
+    let t = SmartCnTokenizer::new();
+    let tokens = t.tokenize("中华人民共和国");
+    assert_eq!(terms(&tokens), vec!["中华人民共和国".to_string()]);
+}
+
+#[test]
+fn segments_common_phrases_into_words() {
+    let t = SmartCnTokenizer::new();
+    let tokens = t.tokenize("我爱北京天安门");
+    assert_eq!(
+        terms(&tokens),
+        vec!["我", "爱", "北京", "天安门"]
+            .into_iter()
+            .map(String::from)
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn segments_bank_of_china() {
+    let t = SmartCnTokenizer::new();
+    let tokens = t.tokenize("中国人民银行");
+    assert_eq!(
+        terms(&tokens),
+        vec!["中国", "人民", "银行"]
+            .into_iter()
+            .map(String::from)
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn sentence_has_multi_character_words() {
+    let t = SmartCnTokenizer::new();
+    let tokens = t.tokenize("今天天气很好我们一起去打网球");
+    let multi = tokens
+        .iter()
+        .filter(|t| t.term.chars().count() > 1)
+        .count();
+    assert!(
+        multi >= 4,
+        "expected multi-character words, got {:?}",
+        terms(&tokens)
+    );
+}
+
+#[test]
+fn offsets_slice_back_to_terms() {
+    // Offsets are byte-based engine-wide: text[start..end] must reproduce the
+    // term exactly (the old char-index offsets sliced to wrong positions).
+    let t = SmartCnTokenizer::new();
+    for text in [
+        "我爱北京天安门",
+        "2024年北京奥运会",
+        "我喜欢Python编程",
+        "今天天气很好，我们一起去打网球。",
+    ] {
+        for tok in t.tokenize(text) {
+            let s = tok.start_offset as usize;
+            let e = tok.end_offset as usize;
+            assert!(text.is_char_boundary(s) && text.is_char_boundary(e), "non-boundary offsets in {text:?}");
+            assert_eq!(&text[s..e], tok.term.as_ref(), "offsets must slice back to term in {text:?}");
+        }
+    }
+}
+
+#[test]
+fn cjk_tokens_cover_text_contiguously() {
+    let t = SmartCnTokenizer::new();
+    let text = "我爱北京天安门";
+    let tokens = t.tokenize(text);
+    let mut cursor = 0usize;
+    for tok in &tokens {
+        assert_eq!(tok.start_offset as usize, cursor, "gap/overlap at {cursor}");
+        cursor = tok.end_offset as usize;
+    }
+    assert_eq!(cursor, text.len());
+}

@@ -81,7 +81,6 @@ impl Tokenizer for SmartCnTokenizer {
                 }
                 CharType::AsciiLetter => {
                     // Collect consecutive ASCII letters
-                    let start_char = i;
                     let start_byte = chars[i].0;
                     while i < chars.len() && classify_char(chars[i].1) == CharType::AsciiLetter {
                         i += 1;
@@ -93,15 +92,14 @@ impl Tokenizer for SmartCnTokenizer {
                     };
                     tokens.push(Token {
                         term: Cow::Borrowed(&text[start_byte..end_byte]),
-                        start_offset: start_char as u32,
-                        end_offset: i as u32,
+                        start_offset: start_byte as u32,
+                        end_offset: end_byte as u32,
                         position,
                     });
                     position += 1;
                 }
                 CharType::Digit => {
                     // Collect consecutive digits
-                    let start_char = i;
                     let start_byte = chars[i].0;
                     while i < chars.len() && classify_char(chars[i].1) == CharType::Digit {
                         i += 1;
@@ -113,8 +111,8 @@ impl Tokenizer for SmartCnTokenizer {
                     };
                     tokens.push(Token {
                         term: Cow::Borrowed(&text[start_byte..end_byte]),
-                        start_offset: start_char as u32,
-                        end_offset: i as u32,
+                        start_offset: start_byte as u32,
+                        end_offset: end_byte as u32,
                         position,
                     });
                     position += 1;
@@ -128,7 +126,7 @@ impl Tokenizer for SmartCnTokenizer {
                     let cjk_end = i;
 
                     // Segment CJK sequence using dynamic programming
-                    let words = self.segment_cjk(text, &chars[cjk_start..cjk_end], cjk_start);
+                    let words = self.segment_cjk(text, &chars[cjk_start..cjk_end]);
                     for (word_text, start_offset, end_offset) in words {
                         tokens.push(Token {
                             term: Cow::Owned(word_text),
@@ -154,12 +152,10 @@ impl SmartCnTokenizer {
     ///
     /// Uses DARTS prefix scanning + Viterbi to find the maximum probability
     /// segmentation path through all possible word boundaries.
-    fn segment_cjk(
-        &self,
-        text: &str,
-        chars: &[(usize, char)],
-        base_offset: usize,
-    ) -> Vec<(String, usize, usize)> {
+    ///
+    /// Returns `(word, start_byte, end_byte)` — byte offsets into the original
+    /// text, matching the engine-wide offset convention.
+    fn segment_cjk(&self, text: &str, chars: &[(usize, char)]) -> Vec<(String, usize, usize)> {
         let n = chars.len();
         if n == 0 {
             return Vec::new();
@@ -169,11 +165,7 @@ impl SmartCnTokenizer {
         if n == 1 {
             let (byte_pos, ch) = chars[0];
             let end_byte = byte_pos + ch.len_utf8();
-            return vec![(
-                String::from(&text[byte_pos..end_byte]),
-                base_offset,
-                base_offset + 1,
-            )];
+            return vec![(String::from(&text[byte_pos..end_byte]), byte_pos, end_byte)];
         }
 
         // Build DAG using DARTS prefix scanning.
@@ -256,26 +248,23 @@ impl SmartCnTokenizer {
         }
         boundaries.reverse();
 
-        // Convert boundaries to word strings with offsets
+        // Convert boundaries to word strings with byte offsets
         let mut result = Vec::with_capacity(boundaries.len());
         for (start, end) in boundaries {
-            let word = Self::extract_word(text, chars, start, end);
-            result.push((word, base_offset + start, base_offset + end));
+            let start_byte = chars[start].0;
+            let end_byte = if end < chars.len() {
+                chars[end].0
+            } else {
+                last_end
+            };
+            result.push((
+                String::from(&text[start_byte..end_byte]),
+                start_byte,
+                end_byte,
+            ));
         }
 
         result
-    }
-
-    /// Extract a word substring from char positions.
-    fn extract_word(text: &str, chars: &[(usize, char)], start: usize, end: usize) -> String {
-        let start_byte = chars[start].0;
-        let end_byte = if end < chars.len() {
-            chars[end].0
-        } else {
-            let (last_byte, last_char) = chars[chars.len() - 1];
-            last_byte + last_char.len_utf8()
-        };
-        String::from(&text[start_byte..end_byte])
     }
 }
 
@@ -355,3 +344,4 @@ mod tests {
         assert!(has_python);
     }
 }
+

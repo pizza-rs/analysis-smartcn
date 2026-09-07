@@ -103,10 +103,17 @@ impl WordDict {
     /// Returns vec of (byte_length_of_match, word_id).
     /// This is the key operation for DAG building — finds all possible
     /// words starting at a given text position in a single trie traversal.
+    ///
+    /// Note: cedarwood yields `(value, index_of_last_matched_byte)`, so the
+    /// match length is `last_byte_index + 1` — returning the index directly
+    /// would land every match one byte short of a UTF-8 boundary.
     #[inline]
     pub fn prefix_match(&self, text: &str) -> Vec<(usize, i32)> {
         match self.trie.common_prefix_search(text) {
-            Some(matches) => matches.into_iter().map(|(id, len)| (len, id)).collect(),
+            Some(matches) => matches
+                .into_iter()
+                .map(|(id, last_byte_index)| (last_byte_index + 1, id))
+                .collect(),
             None => Vec::new(),
         }
     }
@@ -159,5 +166,30 @@ impl WordDict {
     /// Total frequency mass.
     pub fn total_freq(&self) -> f64 {
         self.total_freq
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn prefix_match_lengths_are_utf8_boundaries() {
+        // Regression: cedarwood yields (value, index_of_last_matched_byte) —
+        // treating the index as the length dropped every dictionary edge one
+        // byte short of a char boundary and collapsed segmentation to single
+        // characters.
+        let d = WordDict::new();
+        let text = "中华人民共和国";
+        let matches = d.prefix_match(text);
+        let lens: Vec<usize> = matches.iter().map(|(l, _)| *l).collect();
+        for len in &lens {
+            assert!(text.is_char_boundary(*len), "len {len} is not a UTF-8 boundary");
+        }
+        assert!(lens.contains(&3), "中 (3 bytes): {lens:?}");
+        assert!(lens.contains(&6), "中华 (6 bytes): {lens:?}");
+        assert!(lens.contains(&21), "中华人民共和国 (21 bytes): {lens:?}");
     }
 }
