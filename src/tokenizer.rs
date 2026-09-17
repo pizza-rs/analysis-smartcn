@@ -317,6 +317,7 @@ mod tests {
 
     #[test]
     fn test_ascii_tokens() {
+        crate::init_test_dict_dir();
         let t = SmartCnTokenizer::new();
         let tokens = t.tokenize("hello world");
         assert_eq!(tokens.len(), 2);
@@ -326,6 +327,7 @@ mod tests {
 
     #[test]
     fn test_chinese_segmentation() {
+        crate::init_test_dict_dir();
         let t = SmartCnTokenizer::new();
         let tokens = t.tokenize("中华人民共和国");
         // Should produce multi-char words, not single chars
@@ -337,6 +339,7 @@ mod tests {
 
     #[test]
     fn test_mixed_text() {
+        crate::init_test_dict_dir();
         let t = SmartCnTokenizer::new();
         let tokens = t.tokenize("我爱Python编程");
         assert!(!tokens.is_empty());

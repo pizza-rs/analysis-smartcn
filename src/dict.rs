@@ -12,6 +12,23 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use cedarwood::Cedar;
 
+/// The Lucene SmartCN frequency data, compiled in only with the `embed-dict`
+/// feature (or in no_std builds, where there is no filesystem). The default
+/// pizza build leaves it out and reads
+/// `<dict_dir>/smartcn/word_freq.txt` at runtime instead.
+#[cfg(any(not(feature = "std"), feature = "embed-dict"))]
+const EMBEDDED_WORD_FREQ: &str = include_str!("data/word_freq.txt");
+
+#[cfg(all(feature = "std", feature = "embed-dict"))]
+fn embedded_word_freq() -> Option<&'static str> {
+    Some(EMBEDDED_WORD_FREQ)
+}
+
+#[cfg(all(feature = "std", not(feature = "embed-dict")))]
+fn embedded_word_freq() -> Option<&'static str> {
+    None
+}
+
 /// Word frequency dictionary backed by a DARTS (Double-Array Trie Structure).
 ///
 /// Provides two lookup modes:
@@ -37,16 +54,16 @@ impl WordDict {
     /// Constructs a DARTS trie from ~85,000 entries for O(1) prefix scanning.
     pub fn new() -> Self {
         // External config first (`<config>/analysis/smartcn/word_freq.txt`),
-        // falling back to the copy embedded in the binary.
+        // falling back to the copy embedded in the binary (embed-dict).
         #[cfg(feature = "std")]
         let data = pizza_engine::analysis::dict::load_str(
             "smartcn",
             "word_freq.txt",
-            Some(include_str!("data/word_freq.txt")),
+            embedded_word_freq(),
         )
         .expect("smartcn word_freq dictionary");
         #[cfg(not(feature = "std"))]
-        let data = include_str!("data/word_freq.txt");
+        let data = EMBEDDED_WORD_FREQ;
 
         // First pass: parse entries
         let mut entries_vec: Vec<(String, f64)> = Vec::with_capacity(90000);
@@ -177,6 +194,7 @@ mod tests {
 
     #[test]
     fn prefix_match_lengths_are_utf8_boundaries() {
+        crate::init_test_dict_dir();
         // Regression: cedarwood yields (value, index_of_last_matched_byte) —
         // treating the index as the length dropped every dictionary edge one
         // byte short of a char boundary and collapsed segmentation to single

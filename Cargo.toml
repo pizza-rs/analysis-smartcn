@@ -10,7 +10,11 @@ keywords = ["pizza", "chinese", "smartcn", "tokenizer", "hmm"]
 
 
 [features]
-default = []
+default = ["embed-dict"]
+# Embed `word_freq.txt` as a runtime fallback. The default pizza build
+# leaves this off (binary size) and loads the dictionary from the external
+# `<dict_dir>/smartcn/word_freq.txt` instead.
+embed-dict = []
 std = ["pizza-engine/std"]
 
 [dependencies]
