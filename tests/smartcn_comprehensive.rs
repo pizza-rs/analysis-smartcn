@@ -346,10 +346,7 @@ fn sentence_has_multi_character_words() {
     pizza_analysis_smartcn::init_test_dict_dir();
     let t = SmartCnTokenizer::new();
     let tokens = t.tokenize("今天天气很好我们一起去打网球");
-    let multi = tokens
-        .iter()
-        .filter(|t| t.term.chars().count() > 1)
-        .count();
+    let multi = tokens.iter().filter(|t| t.term.chars().count() > 1).count();
     assert!(
         multi >= 4,
         "expected multi-character words, got {:?}",
@@ -372,8 +369,15 @@ fn offsets_slice_back_to_terms() {
         for tok in t.tokenize(text) {
             let s = tok.start_offset as usize;
             let e = tok.end_offset as usize;
-            assert!(text.is_char_boundary(s) && text.is_char_boundary(e), "non-boundary offsets in {text:?}");
-            assert_eq!(&text[s..e], tok.term.as_ref(), "offsets must slice back to term in {text:?}");
+            assert!(
+                text.is_char_boundary(s) && text.is_char_boundary(e),
+                "non-boundary offsets in {text:?}"
+            );
+            assert_eq!(
+                &text[s..e],
+                tok.term.as_ref(),
+                "offsets must slice back to term in {text:?}"
+            );
         }
     }
 }

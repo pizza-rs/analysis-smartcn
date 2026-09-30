@@ -186,8 +186,6 @@ impl WordDict {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -204,7 +202,10 @@ mod tests {
         let matches = d.prefix_match(text);
         let lens: Vec<usize> = matches.iter().map(|(l, _)| *l).collect();
         for len in &lens {
-            assert!(text.is_char_boundary(*len), "len {len} is not a UTF-8 boundary");
+            assert!(
+                text.is_char_boundary(*len),
+                "len {len} is not a UTF-8 boundary"
+            );
         }
         assert!(lens.contains(&3), "中 (3 bytes): {lens:?}");
         assert!(lens.contains(&6), "中华 (6 bytes): {lens:?}");

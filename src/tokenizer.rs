@@ -347,4 +347,3 @@ mod tests {
         assert!(has_python);
     }
 }
-
